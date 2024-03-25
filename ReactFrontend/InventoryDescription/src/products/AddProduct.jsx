@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import ErrorDisplay from '../pages/ErrorDisplay';
 
 export default function AddProduct() {
 
@@ -11,6 +12,8 @@ export default function AddProduct() {
     productCost:0,
     productNoOfBreakdowns:0
   })
+
+  const [error, setError] = useState(null);
 
   const{productName, productCost, productNoOfBreakdowns} = product
 
@@ -28,12 +31,41 @@ export default function AddProduct() {
 
   const onSubmit=async(e)=>{
     e.preventDefault();
-    await axios.post("http://localhost:8080/insertProduct", product);
-    navigate("/");
+    try {
+      await axios.post("http://localhost:8080/insertProduct", product);
+      navigate("/");
+    } catch (error) {
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setError({
+          title: "Error",
+          status: error.response.status,
+          detail: error.response.data.detail || "An unexpected error occurred.",
+        });
+      } else if (error.request) {
+        // The request was made but no response was received
+        setError({
+          title: "Network Error",
+          status: "Network Error",
+          detail: "No response was received.",
+        });
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError({
+          title: "Error",
+          status: "Error",
+          detail: error.message,
+        });
+      }
+    }
   }
 
   return (
     <div className='container'>
+      {error ? (<ErrorDisplay errorDetails={error}/>)
+      : (
+
       <div className='row'>
         <div className='col-md-6 offset-md-3 border rounded p-4 mt-2 shadow'>
           <h2 className='text-center m-4'>Add Product to DB</h2>
@@ -82,6 +114,7 @@ export default function AddProduct() {
           </form>
         </div>
       </div>
+      )}
     </div>
-  )
+  );
 }

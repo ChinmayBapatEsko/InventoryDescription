@@ -2,11 +2,13 @@ import React from 'react'
 import axios from "axios"
 
 import {Link, useParams} from "react-router-dom"
+import ErrorDisplay from './ErrorDisplay'
 
 export default function Home() {
 
     const [products, setProduct]= React.useState([])
 
+    const [error, setError] = useState(null);
     const {product_id} =useParams()
 
     //useEffect used to do a task that needs to be done each time the page is loaded
@@ -14,20 +16,50 @@ export default function Home() {
       loadProducts();
     },[]); //empty array means that it will run only once, if array not present, function insode useEffect will run infinitely
 
-    const loadProducts=async()=> {
-        const result = await axios.get("http://localhost:8080/fetchProducts");
-        setProduct(result.data);
-        console.log(result.data);
-    }
+    const loadProducts = async () => {
+        try {
+            const result = await axios.get("http://localhost:8080/fetchProducts");
+            setProducts(result.data);
+        } catch (error) {
+            setError(handleError(error)); // Handle error
+        }
+    };
 
-    const deleteProduct=async(product_id)=> {
-        await axios.delete(`http://localhost:8080/deleteProduct/${product_id}`)
-        loadProducts()
-    }
+    const deleteProduct = async (product_id) => {
+        try {
+            await axios.delete(`http://localhost:8080/deleteProduct/${product_id}`);
+            loadProducts();
+        } catch (error) {
+            setError(handleError(error)); // Handle error
+        }
+    };
     
+    const handleError = (error) => {
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            return {
+                status: error.response.status,
+                detail: error.response.data.message || "An error occurred.",
+            };
+        } else if (error.request) {
+            // The request was made but no response was received
+            return {
+                status: "Network Error",
+                detail: "No response was received",
+            };
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            return {
+                status: "Error",
+                detail: error.message,
+            };
+        }
+    };
 
   return (
     <div className="container">
+        {error ? <ErrorDisplay errorDetails={error}/> : (
         <div className="py-4">
 
               <table className="table border shadow">
@@ -61,6 +93,7 @@ export default function Home() {
                   </tbody>
               </table>
         </div>
+        )}
     </div>
   )
 }

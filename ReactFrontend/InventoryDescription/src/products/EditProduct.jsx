@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import ErrorDisplay from '../pages/ErrorDisplay';
 
 export default function EditProduct() {
 
@@ -13,6 +14,8 @@ export default function EditProduct() {
         productCost: 0,
         productNoOfBreakdowns: 0
     })
+
+    const [error, setError] = useState(null);
 
     const { productName, productCost, productNoOfBreakdowns } = product
 
@@ -34,17 +37,50 @@ export default function EditProduct() {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        await axios.put(`http://localhost:8080/updateProduct/${product_id}`, product);
-        navigate("/");
-    }
+        try {
+            await axios.put(`http://localhost:8080/updateProduct/${product_id}`, product);
+            navigate("/");
+        } catch (error) {
+            setError(handleError(error));
+        }
+    };
+
+    const handleError = (error) => {
+        if (error.response) {
+            return {
+                title: "Error",
+                status: error.response.status,
+                detail: error.response.data.detail || "An unexpected error occurred.",
+            };
+        } else if (error.request) {
+            return {
+                title: "Network Error",
+                status: "Network Error",
+                detail: "No response was received.",
+            };
+        } else {
+            return {
+                title: "Error",
+                status: "Error",
+                detail: error.message,
+            };
+        }
+    };
 
     const loadProduct = async() => {
-        const result = await axios.get(`http://localhost:8080/fetchProduct/${product_id}`)
-        setProduct(result.data)
-    } 
+        try {
+            const result = await axios.get(`http://localhost:8080/fetchProduct/${product_id}`)
+            setProduct(result.data)
+        } catch (error) {
+            setError(handleError(error));
+        }
+    };
 
     return (
         <div className='container'>
+            {error ? (
+                <ErrorDisplay errorDetails={error}/>
+            ) : (
             <div className='row'>
                 <div className='col-md-6 offset-md-3 border rounded p-4 mt-2 shadow'>
                     <h2 className='text-center m-4'>Edit Product from DB</h2>
@@ -93,6 +129,7 @@ export default function EditProduct() {
                     </form>
                 </div>
             </div>
+            )}
         </div>
     )
 }
