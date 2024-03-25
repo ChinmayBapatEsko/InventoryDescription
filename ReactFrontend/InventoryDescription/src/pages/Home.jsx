@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from "axios"
 
+import { useState } from 'react'
 import {Link, useParams} from "react-router-dom"
 import ErrorDisplay from './ErrorDisplay'
 
@@ -19,7 +20,7 @@ export default function Home() {
     const loadProducts = async () => {
         try {
             const result = await axios.get("http://localhost:8080/fetchProducts");
-            setProducts(result.data);
+            setProduct(result.data);
         } catch (error) {
             setError(handleError(error)); // Handle error
         }
